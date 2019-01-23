@@ -5,7 +5,7 @@ class JConfig {
 	public $display_offline_message = '1';
 	public $offline_image = '';
 	public $sitename = 'Locar';
-	public $editor = 'codemirror';
+	public $editor = 'tinymce';
 	public $captcha = '0';
 	public $list_limit = '20';
 	public $access = '1';
@@ -48,7 +48,7 @@ class JConfig {
 	public $MetaDesc = 'Site de location de voiture';
 	public $MetaKeys = 'location;voiture;reservation';
 	public $MetaTitle = '1';
-	public $MetaAuthor = '1';
+	public $MetaAuthor = '0';
 	public $MetaVersion = '0';
 	public $robots = '';
 	public $sef = '1';
@@ -84,7 +84,7 @@ class JConfig {
 	public $replyto = '';
 	public $replytoname = '';
 	public $MetaRights = '';
-	public $sitename_pagetitles = '0';
+	public $sitename_pagetitles = '2';
 	public $force_ssl = '0';
 	public $session_memcache_server_host = 'localhost';
 	public $session_memcache_server_port = '11211';
