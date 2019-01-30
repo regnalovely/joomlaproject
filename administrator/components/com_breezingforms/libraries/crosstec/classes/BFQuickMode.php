@@ -1387,12 +1387,18 @@ display:none;
 							$mdata['list'] = str_replace("\r", '', $mdata['list']);
 							$gEx = explode("\n", $mdata['list']);
 							$lines = count($gEx);
-							echo '<select data-chosen="no-chzn" class="ff_elem chzn-done" ' . $size . ($mdata['multiple'] ? 'multiple="multiple" ' : '') . $tabIndex . $onclick . $onblur . $onchange . $onfocus . $onselect . $readonly . 'name="ff_nm_' . $mdata['bfName'] . '[]" id="ff_elem' . $mdata['dbId'] . '">' . "\n";
+							if(isset($_REQUEST['voiture'])){
+								$voiture = $_REQUEST['voiture'];
+							} else {
+								$voiture = "";
+							}
+							echo '<select data-chosen="no-chzn" class="ff_elem chzn-done" ' . $size . (!empty($voiture) ? 'disabled ' : '') . ($mdata['multiple'] ? 'multiple="multiple" ' : '') . $tabIndex . $onclick . $onblur . $onchange . $onfocus . $onselect . $readonly . 'name="ff_nm_' . $mdata['bfName'] . '[]" id="ff_elem' . $mdata['dbId'] . '">' . "\n";
 							for ($i = 0; $i < $lines; $i++) {
 								$iEx = explode(";", $gEx[$i]);
 								$iCnt = count($iEx);
+								$text = htmlentities(trim($iEx[2]), ENT_QUOTES, 'UTF-8');
 								if ($iCnt == 3) {
-									echo '<option ' . ($iEx[0] == 1 ? 'selected="selected" ' : '') . 'value="' . htmlentities(trim($iEx[2]), ENT_QUOTES, 'UTF-8') . '">' . htmlentities(trim($iEx[1]), ENT_QUOTES, 'UTF-8') . '</option>' . "\n";
+									echo '<option ' . ($voiture == $text ? 'selected="selected" ' : '') . 'value="' . $text . '">' . htmlentities(trim($iEx[1]), ENT_QUOTES, 'UTF-8') . '</option>' . "\n";
 								}
 							}
 							echo '</select>' . "\n";

@@ -571,6 +571,7 @@ class HTML_facileFormsProcessor {
             $this->rows = $database->loadObjectList();
             $this->rowcount = count($this->rows);
         } // if
+
         $this->inline = 0;
         $this->template = 0;
         $this->form_id = "ff_form" . $form;
@@ -2983,6 +2984,9 @@ class HTML_facileFormsProcessor {
                     ' name="' . $this->form_id . '"' .
                     ' id="' . $this->form_id . '"' .
                     ' enctype="multipart/form-data"';
+
+        echo "BEGIN";
+
             if ($this->formrow->class2 != '')
                 $params .= ' class="' . $this->getClassName($this->formrow->class2) . '"';
             echo '<form data-ajax="false" ' . $params . ' accept-charset="utf-8" onsubmit="return false;" class="bfQuickMode">' . nl();
@@ -3041,6 +3045,8 @@ class HTML_facileFormsProcessor {
                             break;
                     }
                 }
+
+
 
                 echo '
 				<script type="text/javascript">
@@ -4068,6 +4074,8 @@ class HTML_facileFormsProcessor {
                     echo '</form>' . nl();
                 } // if
         } // if
+
+        echo "END";
         // handle After Form piece
         $code = '';
         switch ($this->formrow->piece2cond) {
