@@ -2985,7 +2985,7 @@ class HTML_facileFormsProcessor {
                     ' id="' . $this->form_id . '"' .
                     ' enctype="multipart/form-data"';
 
-        echo "BEGIN";
+        // echo "BEGIN";
 
             if ($this->formrow->class2 != '')
                 $params .= ' class="' . $this->getClassName($this->formrow->class2) . '"';
@@ -4075,7 +4075,7 @@ class HTML_facileFormsProcessor {
                 } // if
         } // if
 
-        echo "END";
+        // echo "END";
         // handle After Form piece
         $code = '';
         switch ($this->formrow->piece2cond) {
