@@ -8,34 +8,32 @@
 // No direct access
 defined ('_JEXEC') or die ('Restricted access');
 
+use Joomla\Utilities\ArrayHelper;
+
 class RSPageBuilderModelPages extends JModelList
 {
 	
 	public function __construct($config = array()) {
 		if (empty($config['filter_fields'])) {
 			$config['filter_fields'] = array(
-				'p.id',
-				'p.title',
-				'author',
-				'p.created_by',
-				'p.published',
-				'p.access',
-				'p.language'
+				'id', 'p.id',
+				'title', 'p.title',
+				'published', 'p.published',
+				'access', 'p.access', 'access_level',
+				'created_by', 'p.created_by', 'author_id',
+				'created', 'p.created',
+				'language', 'p.language'
 			);
 		}
 		
 		parent::__construct($config);
 	}
 	
-	protected function populateState($ordering = null, $direction = null) {
-		$search = $this->getUserStateFromRequest($this->context . '.search', 'filter_search');
+	protected function populateState($ordering = 'p.id', $direction = 'desc') {
+		$app = JFactory::getApplication();
+		
+		$search = $this->getUserStateFromRequest($this->context . '.filter.search', 'filter_search');
 		$this->setState('filter.search', $search);
-		
-		$access = $this->getUserStateFromRequest($this->context . '.filter.access', 'filter_access');
-		$this->setState('filter.access', $access);
-		
-		$author = $this->getUserStateFromRequest($this->context . '.filter.author', 'filter_author', '');
-        $this->setState('filter.author', $author);
 		
 		$published = $this->getUserStateFromRequest($this->context . '.filter.published', 'filter_published', '');
 		$this->setState('filter.published', $published);
@@ -43,75 +41,118 @@ class RSPageBuilderModelPages extends JModelList
 		$language = $this->getUserStateFromRequest($this->context . '.filter.language', 'filter_language', '');
 		$this->setState('filter.language', $language);
 		
+		$formSubmited = $app->input->post->get('form_submited');
+
+		$access     = $this->getUserStateFromRequest($this->context . '.filter.access', 'filter_access');
+		$author_id   = $this->getUserStateFromRequest($this->context . '.filter.author_id', 'filter_author_id');
+
+		if ($formSubmited) {
+			$access = $app->input->post->get('access');
+			$this->setState('filter.access', $access);
+
+			$author_id = $app->input->post->get('author_id');
+			$this->setState('filter.author_id', $authorId);
+		}
+		
 		// List state information.
 		parent::populateState('p.id', 'desc');
 	}
 	
+	protected function getStoreId($id = '') {
+		// Compile the store id.
+		$id .= ':' . $this->getState('filter.search');
+		$id .= ':' . serialize($this->getState('filter.access'));
+		$id .= ':' . $this->getState('filter.published');
+		$id .= ':' . serialize($this->getState('filter.author_id'));
+		$id .= ':' . $this->getState('filter.language');
+
+		return parent::getStoreId($id);
+	}
+	
 	protected function getListQuery() {
-		$db		= JFactory::getDBO();
-		$select	= array(
-			$db->qn('p'). '.*',
-			$db->qn('u.name', 'author'),
-			$db->qn('vl.title', 'access_title'),
-			$db->qn('l.title_native', 'language_title')
+		// Create a new query object.
+		$db    = $this->getDbo();
+		$query = $db->getQuery(true);
+		
+		// Select the required fields from the table.
+		$query->select(
+			$this->getState(
+				'list.select',
+				'DISTINCT p.id, p.title, p.alias, p.published, p.access, p.created, p.created_by, p.language'
+			)
 		);
 		
-		$query	= $db->getQuery(true)
-			->select($select)
-			->from($db->qn('#__rspagebuilder', 'p'))
-			->leftJoin($db->qn('#__users', 'u') . ' ON ' . $db->qn('p.created_by') . ' = ' . $db->qn('u.id'))
-			->leftJoin($db->qn('#__viewlevels', 'vl') . ' ON ' . $db->qn('vl.id') . ' = ' . $db->qn('p.access'))
-			->leftJoin($db->qn('#__languages', 'l') . ' ON ' . $db->qn('l.lang_code') . ' = ' . $db->qn('p.language'));
+		$query->from('#__rspagebuilder AS p');
 		
-		// Filter by search in title
-        $search = $this->getState('filter.search');
+		// Join over the asset groups.
+		$query->select('ag.title AS access_level')
+			->join('LEFT', '#__viewlevels AS ag ON ag.id = p.access');
 		
-        if (!empty($search)) {
-            if (stripos($search, 'id:') === 0) {
-                $query->where($db->qn('p.id') . ' = ' . $db->q(substr($search, 3)));
-            } else if (stripos($search, 'author:') === 0) {
-                $search = $db->q('%' . $db->escape( substr($search, 7), true ) .'%');
-                $query->where("(" . $db->qn('u.name') . " LIKE $search OR " . $db->qn('u.username') . " LIKE $search)");
-            } else {
-                $search = $db->q('%' . $db->escape($search, true) . '%');
-                $query->where($db->qn('p.title') . " LIKE $search");
-            }
-        }
+		// Join over the users for the author.
+		$query->select('ua.name AS author_name')
+			->join('LEFT', '#__users AS ua ON ua.id = p.created_by');
+			
+		// Join over the language
+		$query->select('l.title AS language_title')
+			->join('LEFT', $db->quoteName('#__languages') . ' AS l ON l.lang_code = p.language');
+
+		// Filter by published state
+		$published = $this->getState('filter.published');
+
+		if (is_numeric($published)) {
+			$query->where('p.published = ' . (int) $published);
+		} else if ($published === '') {
+			$query->where('(p.published = 0 OR p.published = 1)');
+		}
 		
-		// Filter by access
-		if ($access = $this->getState('filter.access')) {
+		// Filter by access level.
+		$access = $this->getState('filter.access');
+
+		if (is_numeric($access)) {
 			$query->where('p.access = ' . (int) $access);
+		} else if (is_array($access)) {
+			$access = ArrayHelper::toInteger($access);
+			$access = implode(',', $access);
+			$query->where('p.access IN (' . $access . ')');
 		}
 		
 		// Filter by author
-		$author = $this->getState('filter.author');
-            
-        if ($author !== '') {
-            $query->where($db->qn('created_by') . ' = ' . $db->q($author));
-        }
+		$author_id = $this->getState('filter.author_id');
+
+		if (is_numeric($author_id)) {
+			$type = $this->getState('filter.author_id.include', true) ? '= ' : '<>';
+			$query->where('p.created_by ' . $type . (int) $author_id);
+		} else if (is_array($author_id)) {
+			$author_id = ArrayHelper::toInteger($author_id);
+			$author_id = implode(',', $author_id);
+			$query->where('p.created_by IN (' . $author_id . ')');
+		}
 		
-        // Filter by published state
-        $published = $this->getState('filter.published');
-            
-        if ($published !== '') {
-			if (is_numeric($published)) {
-				$query->where($db->qn('p.published') . ' = ' . (int) $published);
-			}
-        }
-		
-		// Filter by language
+		// Filter on the language.
 		if ($language = $this->getState('filter.language')) {
 			$query->where('p.language = ' . $db->quote($language));
 		}
 		
-		$listOrdering	= $this->getState('list.ordering', 'p.title');
-		$listDirn	= $db->escape($this->getState('list.direction', 'ASC'));
-		
-		if ($listOrdering == 'p.access') {
-			$query->order('p.access ' . $listDirn . ', p.title ' . $listDirn);
-		} else {
-			$query->order($db->escape($listOrdering) . ' ' . $listDirn);
+		// Filter by search in title.
+		$search = $this->getState('filter.search');
+
+		if (!empty($search)) {
+			if (stripos($search, 'id:') === 0) {
+				$query->where('p.id = ' . (int) substr($search, 3));
+			} else if (stripos($search, 'author:') === 0) {
+				$search = $db->quote('%' . $db->escape(substr($search, 7), true) . '%');
+				$query->where('(ua.name LIKE ' . $search . ' OR ua.username LIKE ' . $search . ')');
+			} else {
+				$search = $db->quote('%' . str_replace(' ', '%', $db->escape(trim($search), true) . '%'));
+				$query->where('(p.title LIKE ' . $search . ' OR p.alias LIKE ' . $search . ')');
+			}
 		}
+		
+		// Add the list ordering clause.
+		$orderCol  = $this->state->get('list.ordering', 'p.id');
+		$orderDirn = $this->state->get('list.direction', 'DESC');
+
+		$query->order($db->escape($orderCol) . ' ' . $db->escape($orderDirn));
 		
 		return $query;
 	}

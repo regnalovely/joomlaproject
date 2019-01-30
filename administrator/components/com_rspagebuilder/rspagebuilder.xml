@@ -2,7 +2,7 @@
 <extension type="component" version="3.2" method="upgrade">
 	<name>COM_RSPAGEBUILDER</name>
 	<description>COM_RSPAGEBUILDER_DESC</description>
-	<version>1.0.25</version>
+	<version>1.0.26</version>
 	<creationDate>November 2016</creationDate>
 	<author>RSJoomla!</author>
 	<authorEmail>support@rsjoomla.com</authorEmail>

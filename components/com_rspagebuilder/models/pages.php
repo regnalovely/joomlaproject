@@ -72,6 +72,7 @@ class RSPageBuilderModelPages extends JModelList {
 			$terms		= explode(' ', $filter);
 			$terms		= array_unique($terms);
 			$wheres		= array();
+			array_unshift($terms, $filter);
 			
 			foreach($terms as $term) {
 				if (strlen($term) > 1) {

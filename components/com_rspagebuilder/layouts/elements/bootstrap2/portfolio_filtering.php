@@ -152,7 +152,7 @@ if (count($items)) {
 				$content_style['color'] = $item['options']['item_text_color'];
 			}
 ?>
-			<div class="grid_1<?php echo $element_options['grid'];?> filtr-item" data-category="<?php echo implode(', ', array_keys($item_tags));?>" data-sort="<?php echo $item['options']['item_title'];?>">
+			<div class="grid_1<?php echo $element_options['grid'];?> filtr-item" data-category="<?php echo implode(', ', array_keys($item_tags));?>" data-sort="<?php echo RSPageBuilderHelper::escapeSearch($item['options']['item_title']); ?>">
 				<div class="filtr-item-inner" <?php echo RSPageBuilderHelper::buildStyle($item_style); ?>>
 				<?php if (!empty($item['options']['item_url'])) { ?>
 					<a href="<?php echo $item['options']['item_url']; ?>" target="<?php echo $item['options']['item_url_target']; ?>">

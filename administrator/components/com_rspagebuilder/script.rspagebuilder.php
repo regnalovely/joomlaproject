@@ -112,9 +112,10 @@ class com_rspagebuilderInstallerScript
 		<img src="../media/com_rspagebuilder/images/rspagebuilder.png" alt="RSPageBuilder!" />
 	</div>
 	<div class="installer-right">
-		<h2>RSPageBuilder! v1.0.25 Changelog</h2>
+		<h2>RSPageBuilder! v1.0.26 Changelog</h2>
 		<ul class="version-history">
-			<li><span class="version-fixed">Fix</span> Content Plugins were not triggered in some elements.</li>
+			<li><span class="version-upgraded">Upg</span> Expression search was added to existing word search within pages.</li>
+			<li><span class="version-upgraded">Upg</span> Sidebar filter was replaced with Joomla! Search Tools in pages backend view.</li>
 		</ul>
 		<a class="btn btn-success" href="index.php?option=com_rspagebuilder">Start using RSPageBuilder!</a>
 		<a class="btn btn-info" href="https://www.rsjoomla.com/support/documentation/rspagebuilder.html" target="_blank">Read the RSPageBuilder! User Guide</a>

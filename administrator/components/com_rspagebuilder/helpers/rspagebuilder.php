@@ -14,27 +14,27 @@ class RSPageBuilderHelper {
 		$ext = JFile::getExt($file);
 		switch (true) {
 			case ($type == 'component' and $ext == 'css'):
-				JHtml::_('stylesheet', 'com_rspagebuilder/'.$file, array(), true);
+				JHtml::_('stylesheet', 'com_rspagebuilder/'.$file, array('relative' => true));
 			break;
 			
 			case ($type == 'element' and $ext == 'css'):
-				JHtml::_('stylesheet', 'com_rspagebuilder/elements/'.$file, array(), true);
+				JHtml::_('stylesheet', 'com_rspagebuilder/elements/'.$file, array('relative' => true));
 			break;
 			
 			case ($type == 'module' and $ext == 'css'):
-				JHtml::_('stylesheet', 'mod_rspagebuilder_elements/'.$file, array(), true);
+				JHtml::_('stylesheet', 'mod_rspagebuilder_elements/'.$file, array('relative' => true));
 			break;
 			
 			case ($type == 'component' and $ext == 'js'):
-				JHtml::_('script', 'com_rspagebuilder/'.$file, false, true);
+				JHtml::_('script', 'com_rspagebuilder/'.$file, array('relative' => true));
 			break;
 			
 			case ($type == 'element' and $ext == 'js'):
-				JHtml::_('script', 'com_rspagebuilder/elements/'.$file, array(), true);
+				JHtml::_('script', 'com_rspagebuilder/elements/'.$file, array('relative' => true));
 			break;
 			
 			case ($type == 'module' and $ext == 'js'):
-				JHtml::_('script', 'mod_rspagebuilder_elements/'.$file, false, true);
+				JHtml::_('script', 'mod_rspagebuilder_elements/'.$file, array('relative' => true));
 			break;
 		}
 	}
@@ -67,30 +67,60 @@ class RSPageBuilderHelper {
 					'marker_title',
 					'marker_content'
 				);
-				$terms		= explode(' ', $filter);
-				$terms		= array_unique($terms);
+				$terms			= explode(' ', $filter);
+				$terms			= array_unique($terms);
+				$terms_count	= is_array($terms) ? count($terms) : 0;
 				
-				foreach ($terms as $term) {
+				if ($terms_count > 1) {
 					
-					if (strlen($term) > 1) {
-						// Search in element options
-						foreach ($element['options'] as $key => $value) {
-							if (!empty($element['options'][$key]) && in_array($key, $searchable)) {
-								$is_html = preg_match('/<(a|blockquote|br|button|em|h1|h2|h3|h4|h5|h6|i|img|label|legend|li|ol|p|q|small|span|strong|sub|sup|table|tbody|td|tfoot|th|thead|title|tr|tt|u|ul)(.*)="(.*)'.$term.'(.*)"(.*)>/i', $value);
+					// Search filter expression in element options
+					foreach ($element['options'] as $key => $value) {
+						if (!empty($element['options'][$key]) && in_array($key, $searchable)) {
+							$is_html = RSPageBuilderHelper::checkHtml($filter, $value);
+							
+							if (!$is_html) {
+								$element['options'][$key] = preg_replace('/'.$filter.'/i', '<span class="rspbld-search-result">$0</span>', $value);
+							}
+						}
+					}
+					
+					// Search filter expression in element items options
+					foreach ($element['items'] as $item_key => $item_value) {
+						foreach ($element['items'][$item_key]['options'] as $key => $value) {
+							if (!empty($element['items'][$item_key]['options'][$key]) && in_array($key, $searchable)) {
+								$is_html = RSPageBuilderHelper::checkHtml($filter, $value);
 								
 								if (!$is_html) {
+									$element['items'][$item_key]['options'][$key] = preg_replace('/'.$filter.'/i', '<span class="rspbld-search-result">$0</span>', $value);
+								}
+							}
+						}
+					}
+				}
+				
+				foreach ($terms as $term) {
+					if (strlen($term) > 1) {
+						
+						// Search filter term in element options
+						foreach ($element['options'] as $key => $value) {
+							if (!empty($element['options'][$key]) && in_array($key, $searchable)) {
+								$is_html	= RSPageBuilderHelper::checkHtml($term, $value);
+								$searched	= preg_match('/<span class="rspbld-search-result">(.*)'.$term.'(.*)<\/span>/i', $value);
+								
+								if (!$is_html && !$searched) {
 									$element['options'][$key] = preg_replace('/'.$term.'/i', '<span class="rspbld-search-result">$0</span>', $value);
 								}
 							}
 						}
 						
-						// Search in element items options
+						// Search filter term in element items options
 						foreach ($element['items'] as $item_key => $item_value) {
 							foreach ($element['items'][$item_key]['options'] as $key => $value) {
 								if (!empty($element['items'][$item_key]['options'][$key]) && in_array($key, $searchable)) {
-									$is_html = preg_match('/<(a|blockquote|br|button|em|h1|h2|h3|h4|h5|h6|i|img|label|legend|li|ol|p|q|small|span|strong|sub|sup|table|tbody|td|tfoot|th|thead|title|tr|tt|u|ul)(.*)="(.*)'.$term.'(.*)"(.*)>/i', $value);
+									$is_html	= RSPageBuilderHelper::checkHtml($term, $value);
+									$searched	= preg_match('/<span class="rspbld-search-result">(.*)'.$term.'(.*)<\/span>/i', $value);
 									
-									if (!$is_html) {
+									if (!$is_html && !$searched) {
 										$element['items'][$item_key]['options'][$key] = preg_replace('/'.$term.'/i', '<span class="rspbld-search-result">$0</span>', $value);
 									}
 								}
@@ -230,6 +260,10 @@ class RSPageBuilderHelper {
 		return rand(1000, 9999);
 	}
 	
+	public static function checkHtml($search, $string) {
+		return preg_match('/<(a|blockquote|br|button|em|h1|h2|h3|h4|h5|h6|i|img|label|legend|li|ol|p|q|small|span|strong|sub|sup|table|tbody|td|tfoot|th|thead|title|tr|tt|u|ul)(.*)="(.*)'.$search.'(.*)"(.*)>/i', $string);
+	}
+	
 	public static function createId($text, $number) {
 		$id = '';
 		
@@ -262,6 +296,10 @@ class RSPageBuilderHelper {
 		}
 		
 		return $array;
+	}
+	
+	public static function escapeSearch($string) {
+		return preg_replace('/<span class="rspbld-search-result">(.*?)<\/span>/', '$1', $string);
 	}
 	
 	public static function buildStyle($array) {

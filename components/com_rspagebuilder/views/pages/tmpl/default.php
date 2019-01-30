@@ -12,7 +12,7 @@ defined ('_JEXEC') or die ('Restricted access');
 <div class="rspbld-pages">
 	<?php
 	if (count($this->items)) {
-		foreach($this->items as $key=>$page) {
+		foreach($this->items as $key => $page) {
 	?>
 	<div class="rspbld-page-container">
 		<div class="row-fluid">
